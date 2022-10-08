@@ -2,23 +2,40 @@ package com.example.restservice;
 
 import com.example.trading.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 public class Application implements SignalHandler {
-    private final String signalBase = ".Sig";
-    public Algo algo = new Algo();
+    private static final String signalBase = ".Sig";
+    protected static final Algo algo = new Algo();
+
+    private final PrintStream standardOut = System.out;
+    private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
+
+    public String getOutput() {
+        return this.outputStreamCaptor.toString();
+    }
+
+    public void resetOutput() {
+        this.outputStreamCaptor.reset();
+    }
 
     @Override
     public void handleSignal(int signal) {
-        String className = "com.example.restservice" + this.signalBase + signal;
+        String className = "com.example.restservice" + signalBase + signal;
         //String className = this.getClass().getPackage().getName() + this.signalBase + signal;
+
+        System.setOut(new PrintStream(outputStreamCaptor));
 
         try {
             Class<?> cls = Class.forName(className);
             Object obj = cls.getDeclaredConstructor().newInstance();
 
-            java.lang.reflect.Method method = cls.getMethod("handleSignal");
-            String methodName = "handleSignal";
+            //java.lang.reflect.Method method = cls.getMethod("handleSignal");
+            //String methodName = "handleSignal";
             try {
-                method = cls.getMethod(methodName);
+                //method = cls.getMethod(methodName);
+                java.lang.reflect.Method method = cls.getMethod("handleSignal");
                 System.out.println("\nSignal: " + signal);
                 method.invoke(obj);
             }
@@ -36,6 +53,8 @@ public class Application implements SignalHandler {
         catch (Exception ex) {
             ex.printStackTrace();
         }
+
+        System.setOut(standardOut);
 
         /*Algo algo = new Algo();
 
